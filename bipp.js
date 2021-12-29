@@ -1,5 +1,5 @@
 const ApiConst = {
-  VERSION: '1.0.4',
+  VERSION: '1.0.5_dev',
   INIT: 'init',
   ADD_FILTER: 'addFilter',
   REMOVE_FILTER: 'removeFilter',
@@ -13,8 +13,6 @@ const ApiConst = {
   const SDK_Error = ApiConst.MSG_PREFIX + ' Error';
 
   class Bipp {
-
-    static allInstances = {};
 
     constructor(args) {
 
@@ -33,25 +31,22 @@ const ApiConst = {
 
       console.log(`${ApiConst.MSG_PREFIX} Version ${ApiConst.VERSION}`);
 
-      window.onmessage = async (e) => {
-        const { type, from } = e.data;
+      window.addEventListener('message', this.messageHandler.bind(this));
+    }
 
-        if (type == 'sendAuth') {
-          let bippInst = this.getInstance(from);
-          if (bippInst) {
-            bippInst.sendAuthDetails();
-          } 
+    messageHandler(e) {
+      const { type, from } = e.data;
+
+      if (type == 'sendAuth') {
+        if (this.url == from) {
+          this.sendAuthDetails();
         }
-        else if (type == 'relogin') {
-          let bippInst = this.getInstance(from);
-          if (bippInst) {
-            bippInst.reLogin();
-          }
+      }
+      else if (type == 'relogin') {
+        if (this.url == from) {
+          this.reLogin();
         }
-        else if (this.onmessage) {
-          this.onmessage(e);
-        }
-      };
+      }
     }
 
     log(...args) {
@@ -60,12 +55,10 @@ const ApiConst = {
       }
     }
 
-    setInstance(url) {
-      Bipp.allInstances[url] = this;
-    }
-
-    getInstance(url) {
-      return Bipp.allInstances[url];
+    log(...args) {
+      if (this.debug) {
+        console.log("BippSDK", this.url, args);
+      }
     }
 
     async reLogin() {
@@ -140,7 +133,6 @@ const ApiConst = {
 
         if (res) {
           this.url = res.data.url;
-          this.setInstance(this.url);
           this.auth_detail.embedToken = res.data.embed_token;
           return true;
         }
@@ -230,6 +222,7 @@ const ApiConst = {
       if (!id) throw `${SDK_Error} ${sign}, missing id in config`;
 
       const res = await this.login();
+      this.log('login complete');
       if (!res) return;
 
       this.element = document.getElementById(id);
@@ -313,4 +306,3 @@ const ApiConst = {
   }
   window.Bipp = Bipp;
 })();
-
