@@ -1,5 +1,5 @@
 const ApiConst = {
-  VERSION: '1.0.5_dev',
+  VERSION: '1.0.6_dev',
   INIT: 'init',
   ADD_FILTER: 'addFilter',
   REMOVE_FILTER: 'removeFilter',
@@ -55,12 +55,6 @@ const ApiConst = {
       }
     }
 
-    log(...args) {
-      if (this.debug) {
-        console.log("BippSDK", this.url, args);
-      }
-    }
-
     async reLogin() {
 
       if (!this.lastLoginTime) {
@@ -72,7 +66,7 @@ const ApiConst = {
         // do not send multiple login requests
         return;
       }
-      console.log('doing relogin...')
+      this.log('doing relogin...')
       this.lastLoginTime = new Date().getTime();
       this.auth_done = false;
       await this.load();
@@ -222,13 +216,16 @@ const ApiConst = {
       if (!id) throw `${SDK_Error} ${sign}, missing id in config`;
 
       const res = await this.login();
-      this.log('login complete');
-      if (!res) return;
+      if (!res) {
+        this.log('login failed');
+        return;
+      }
+      this.log('login completed');
 
       this.element = document.getElementById(id);
 
-      if (this.iframe && element.contains(this.iframe)) {
-        element.removeChild(this.iframe);
+      if (this.iframe && this.element.contains(this.iframe)) {
+        this.element.removeChild(this.iframe);
       }
 
       let iframe = document.createElement('iframe');
