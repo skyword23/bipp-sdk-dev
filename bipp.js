@@ -1,5 +1,5 @@
 const ApiConst = {
-  VERSION: '1.0.6_dev',
+  VERSION: '1.0.7',
   INIT: 'init',
   ADD_FILTER: 'addFilter',
   REMOVE_FILTER: 'removeFilter',
@@ -22,6 +22,7 @@ const ApiConst = {
       this.iframe = null;
       this.server = null;
       this.url = null;
+      this.resourceId = null;
       this.signed_url = null;
       
       this.lastLoginTime = null;
@@ -33,17 +34,27 @@ const ApiConst = {
 
       window.addEventListener('message', this.messageHandler.bind(this));
     }
+    
+    getResourceId(url) {
+      let toks = url.split('/dashboards/');
+      if (toks.length > 1) {
+        let result = toks[1];
+        result = result.split("?");
+        return result[0];
+      }
+      return null;
+    }
 
     messageHandler(e) {
       const { type, from } = e.data;
 
       if (type == 'sendAuth') {
-        if (this.url == from) {
+        if (this.resourceId == from) {
           this.sendAuthDetails();
         }
       }
       else if (type == 'relogin') {
-        if (this.url == from) {
+        if (this.resourceId == from) {
           this.reLogin();
         }
       }
@@ -127,6 +138,7 @@ const ApiConst = {
 
         if (res) {
           this.url = res.data.url;
+          this.resourceId = this.getResourceId(this.url);
           this.auth_detail.embedToken = res.data.embed_token;
           return true;
         }
